@@ -14,13 +14,13 @@ OUTPUT_DIR = "./outputs"
 class IgBrowser(object):
     """A simulated instagram browser.
 
-    Use "selenium" to open the browser
+    Use "selenium" to open the web page with Chrome
     """
     igUrl = "https://www.instagram.com"
     sleepTime = 1
     # loadMorePostStr = "Load more"
-    loadMorePostStr = "載入更多內容"
     # loadMoreCommentStr = "Load more comments"
+    loadMorePostStr = "載入更多內容"
     loadMoreCommentStr = "載入更多留言"
 
     def __init__(self, userName):
@@ -52,7 +52,7 @@ class IgBrowser(object):
             util.debugPrint("%d posts" % n)
         sleep(5)
 
-    def getUserInfo(self):
+    def extractUserInfo(self):
         print("Extracting %s's profile info ..." % self.userName)
         soup = BeautifulSoup(self.driver.page_source, features='lxml')
         spans = soup.find_all('span', {'class': '_fd86t'})
@@ -65,7 +65,7 @@ class IgBrowser(object):
                 "numFollowing": spans[2].get_text()
                 }
 
-    def getPostInfo(self, postUrl):
+    def extractPostInfo(self, postUrl):
         print("Extracting post info ...")
         self.driver.get(postUrl)
         sleep(self.sleepTime)
@@ -87,7 +87,7 @@ class IgBrowser(object):
         return {"numLike": numLike,
                 "comments": comments}
 
-    def getPostUrls(self):
+    def extractPostUrls(self):
         """Get the post urls shown in the current page.
         """
         print("Extracting %s's post URLs ..." % self.userName)
@@ -102,8 +102,9 @@ class IgBrowser(object):
 
     def output(self, outputDir, i, postInfo):
         print("Outputing %d th post ..." % i)
-        os.makedirs(os.path.join(outputDir, self.userName, "%d_post" % i))
-        fileName = os.path.join(outputDir, self.userName, "%d_post" % i, "comments.txt")
+        postDir = os.path.join(outputDir, self.userName, "%d_post" % i)
+        os.makedirs(postDir)
+        fileName = os.path.join(postDir, "comments.txt")
         with open(fileName, 'w') as f:
             f.write("%d likes\n" % postInfo["numLike"])
             for comment in postInfo["comments"]:
@@ -114,12 +115,12 @@ class IgBrowser(object):
 
     @classmethod
     def padUrl(cls, url):
-        """Complete the url.
+        """Complete the URL.
         """
         return cls.igUrl + url
 
     @staticmethod
-    def getComments(cls, soup):
+    def getComments(soup):
         comments = soup.find_all('li', {'class': '_ezgzd'})
         comments = [comment.span.get_text() for comment in comments]
         return comments
