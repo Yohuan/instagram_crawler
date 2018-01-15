@@ -6,9 +6,7 @@ from time import sleep
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
-
-
-OUTPUT_DIR = "./outputs"
+from urllib.request import urlretrieve
 
 
 class IgBrowser(object):
@@ -79,12 +77,17 @@ class IgBrowser(object):
 
         soup = BeautifulSoup(self.driver.page_source, features='lxml')
 
+        postType = "image" if self.isImage(soup) else "video"
+        imgUrl = self.getImgUrl(soup, postType)
+
         like = soup.find('span', {'class': '_nzn1h'})
         numLike = util.convert2Int(like.span.get_text()) if like is not None else 0
 
         comments = self.getComments(soup)
 
-        return {"numLike": numLike,
+        return {"type": postType,
+                "imgUrl": imgUrl,
+                "numLike": numLike,
                 "comments": comments}
 
     def extractPostUrls(self):
@@ -100,7 +103,7 @@ class IgBrowser(object):
     def getNumPost(self):
         return len(self.driver.find_elements_by_class_name('_mck9w'))
 
-    def output(self, outputDir, i, postInfo):
+    def output(self, outputDir, i, postInfo, includeImg=True):
         print("Outputing %d th post ..." % i)
         postDir = os.path.join(outputDir, self.userName, "%d_post" % i)
         os.makedirs(postDir)
@@ -109,6 +112,11 @@ class IgBrowser(object):
             f.write("%d likes\n" % postInfo["numLike"])
             for comment in postInfo["comments"]:
                 f.write("%s\n" % comment)
+
+        imgName = "image.png" if postInfo["type"] == "image" else "video.png"
+        imgName = os.path.join(postDir, imgName)
+        if includeImg:
+            urlretrieve(postInfo["imgUrl"], imgName)
 
     def close(self):
         self.driver.quit()
@@ -125,30 +133,26 @@ class IgBrowser(object):
         comments = [comment.span.get_text() for comment in comments]
         return comments
 
+    @staticmethod
+    def isImage(soup):
+        numView = soup.find_all('span', {'class': '_m5zti'})
+        return True if not numView else False
 
-if __name__ == '__main__':
-    userNames = util.getUserNames()
-    util.resetDir(OUTPUT_DIR)
-    for userName in userNames:
-        try:
-            igBrowser = IgBrowser(userName)
-            userInfo = igBrowser.getUserInfo()
-            util.debugPrint("# Post: %d" % userInfo["numPost"])
-            util.debugPrint("# Follower: %s" % userInfo["numFollower"])
-            util.debugPrint("# Following: %s" % userInfo["numFollowing"])
-
-            if userInfo["numPost"] > 12:
-                igBrowser.scrollDown(userInfo["numPost"])
-
-            postUrls = igBrowser.getPostUrls()
-            assert len(postUrls) == userInfo["numPost"]
-
-            for i, postUrl in enumerate(postUrls):
-                print("%d th post" % (i + 1))
-                postInfo = igBrowser.getPostInfo(postUrl)
-                igBrowser.output(OUTPUT_DIR, i + 1, postInfo)
-
-        except Exception as e:
-            print(e)
-        finally:
-            igBrowser.close()
+    @staticmethod
+    def getImgUrl(soup, postType):
+        """
+        If postType == video, then return a image representing that video
+        """
+        if postType == "image":
+            try:
+                img = soup.find('div', {'class': '_4rbun'})
+                imgUrl = img.img['src']
+            except Exception:
+                imgUrl = None
+        else:
+            try:
+                img = soup.find('div', {'class': '_qzesf'})
+                imgUrl = img.video['poster']
+            except Exception:
+                imgUrl = None
+        return imgUrl
