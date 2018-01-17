@@ -24,7 +24,15 @@ pip install selenium
 
 * chrome driver
 
+Put under somewhere like /usr/bin
+
+Example:
+
+/Users/yohuan/anaconda/envs/crawl/bin/chromedriver
+
+```
 See [ChromeDriver - WebDriver for Chrome](https://sites.google.com/a/chromium.org/chromedriver/)
+```
 
 ## Running code
 
