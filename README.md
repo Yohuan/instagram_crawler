@@ -11,7 +11,7 @@ Also dump one representive image of each post.
 What things you need to install
 
 ```
-selenium, chrome driver
+selenium, beautifulsoup, chrome driver
 ```
 
 ### Installing
@@ -22,13 +22,21 @@ selenium, chrome driver
 pip install selenium
 ```
 
+* beautifulsoup
+
+```
+conda install beautifulsoup
+```
+
 * chrome driver
 
+ See [ChromeDriver - WebDriver for Chrome](https://sites.google.com/a/chromium.org/chromedriver/)
+
+```
 Put under somewhere like /usr/bin
 
 Example: /Users/yohuan/anaconda/envs/crawl/bin/chromedriver
-
-See [ChromeDriver - WebDriver for Chrome](https://sites.google.com/a/chromium.org/chromedriver/)
+```
 
 ## Running code
 
